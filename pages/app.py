@@ -2,49 +2,47 @@ import streamlit as st
 import geopandas as gpd
 import pydeck as pdk
 import pandas as pd
+import folium
+from branca.colormap import linear
+from streamlit_folium import st_folium
 
-st.set_page_config(layout="wide")
-st.title("🗺️ Toronto Urban Heat Risk Explorer")
-st.markdown("This interactive map shows the distribution of elderly residents across Toronto neighborhoods — a key vulnerability factor for heat risk.")
+def load_data(filename: str):
+    return gpd.read_file(filename)
 
-# Load data
-@st.cache_data
-def load_data():
-    return gpd.read_file("../data/elderly_data.geojson")
+gdf = load_data("../data/elderly_data.geojson")
+colour_by = "Elderly Distribution"
 
-gdf = load_data()
+gdf[colour_by] = pd.to_numeric(gdf[colour_by], errors = "coerce") # casts retrieved strings to numbers. improper conversion -> NaN
+gdf = gdf.dropna(subset = [colour_by])
 
-# Check geometry
-if gdf.empty or gdf.geometry.isnull().all():
-    st.error("GeoDataFrame is empty or missing geometry.")
-    st.stop()
+min_val = gdf[colour_by].min()
+max_val = gdf[colour_by].max()
 
-# Convert to WGS84 if needed
-if gdf.crs != "EPSG:4326":
-    gdf = gdf.to_crs("EPSG:4326")
+colour_map = linear.YlOrRd_09.scale(min_val, max_val)
+colour_map.caption = "Heat Risk Index"
 
-# Create pydeck layer
-layer = pdk.Layer(
-    "GeoJsonLayer",
-    data = gdf,
-    get_fill_color = '[255, 100, 100, 140]',
-    pickable = True,
-    auto_highlight = True
-)
+city_map = folium.Map(location = [gdf.geometry.centroid.y.mean(), gdf.geometry.centroid.x.mean(),], zoom_start = 11)
 
-initial_view = pdk.ViewState(
-    latitude = 56.0,
-    longitude = -96.0,
-    zoom = 3.5,
-    pitch = 0
-)
+folium.GeoJson(
+    gdf, 
+    style_function = lambda feature: {
+        "fillColor": colour_map(feature["properties"][colour_by]),
+        "color": "black",
+        "weight": 1,
+        "dashArray": "5, 5",
+        "fillOpacity": 0.7,
+    },
+    tooltip = folium.GeoJsonTooltip(fields = [colour_by], aliases = ["Heat Risk: "])
+).add_to(city_map)
 
-view_state = pdk.ViewState(
-    latitude = gdf.geometry.centroid.y.mean(),
-    longitude = gdf.geometry.centroid.x.mean(),
-    zoom = 10,
-    pitch = 0
-)
+colour_map.add_to(city_map)
 
-# Display
-st.pydeck_chart(pdk.Deck(layers=[layer], initial_view_state=view_state, tooltip={"text": "{Neighbourhood}\nElderly %: {Elderly Distribution}"}))
+st.title("Urban Heat Risk Explorer")
+st_data = st_folium(city_map, width = 800, height = 600)
+
+# # Add the legend
+# colormap.add_to(m)
+
+# # Display in Streamlit
+# st.title("Urban Heat Risk Explorer")
+# st_data = st_folium(m, width=800, height=600)
