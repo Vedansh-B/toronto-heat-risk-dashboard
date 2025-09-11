@@ -9,7 +9,7 @@ from streamlit_folium import st_folium
 def load_data(filename: str):
     return gpd.read_file(filename)
 
-gdf = load_data("../data/elderly_data.geojson")
+gdf = load_data("../data/processed/elderly_data.geojson")
 colour_by = "Elderly Distribution"
 
 gdf[colour_by] = pd.to_numeric(gdf[colour_by], errors = "coerce") # casts retrieved strings to numbers. improper conversion -> NaN
