@@ -1,4 +1,4 @@
-neighborhood,ndvi_mean_1km,ndvi_pct_valid,lst_mean_c,lst_pct_valid
+neighbourhood,ndvi_mean_1km,ndvi_pct_valid,lst_mean_c,lst_pct_valid
 South Eglinton-Davisville,0.5327857136726379,22.22222222222222,33.04628372192383,22.22222222222222
 North Toronto,0.4648725986480713,25.0,33.319087982177734,25.0
 Dovercourt Village,0.4253185987472534,12.5,35.03888702392578,12.5
