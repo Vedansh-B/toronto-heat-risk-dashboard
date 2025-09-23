@@ -48,3 +48,11 @@ def inject_starry_bg():
     </style>
     <div id="starfield"></div><div id="starfield2"></div>
     """, unsafe_allow_html=True)
+
+def footer_message():
+    st.markdown("""
+  <hr style="margin-top: 2rem; margin-bottom: 0.5rem;">
+  <div style="text-align: center; color: #888; font-size: 0.85rem;">
+    Built with ☕ and a love for cities — <b>Vedansh Bhatt</b>  
+  </div>
+  """, unsafe_allow_html=True)

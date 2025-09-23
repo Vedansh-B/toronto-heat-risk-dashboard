@@ -1,7 +1,7 @@
 import streamlit as st
 from streamlit.components.v1 import html
 from PIL import Image
-from theme import inject_starry_bg
+from theme import inject_starry_bg, footer_message
 
 st.set_page_config(
     page_title="Urban Heat Risk Explorer",
@@ -144,3 +144,5 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
+
+footer_message()

@@ -6,7 +6,7 @@ import folium
 from folium.features import GeoJson, GeoJsonTooltip, GeoJsonPopup
 from streamlit_folium import st_folium
 from branca.colormap import LinearColormap
-from theme import inject_starry_bg
+from theme import inject_starry_bg, footer_message
 
 st.set_page_config(page_title="Toronto Heat Risk Explorer", layout="wide")
 inject_starry_bg()
@@ -277,3 +277,5 @@ if metric in gdf.columns:
             )
 else:
     st.warning(f"No data available for {metric}")
+
+footer_message()
