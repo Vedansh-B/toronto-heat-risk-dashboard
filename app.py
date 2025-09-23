@@ -1,6 +1,7 @@
 import streamlit as st
 from streamlit.components.v1 import html
 from PIL import Image
+from theme import inject_starry_bg
 
 st.set_page_config(
     page_title="Urban Heat Risk Explorer",
@@ -9,6 +10,8 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+
+inject_starry_bg()
 html("""
 <div id="particles-js" style="position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: -1;"></div>
 
@@ -46,60 +49,6 @@ html("""
   });
 </script>
 """)
-
-st.markdown("""
-<style>
-html, body { background: #000; }
-[data-testid="stAppViewContainer"],
-[data-testid="stHeader"],
-.block-container,
-main, .stApp { background: transparent !important; }
-
-/* Star layers */
-#starfield, #starfield2 {
-  position: fixed; inset: 0; z-index: -1; pointer-events: none;
-  background-repeat: repeat;
-}
-
-#starfield {
-  background-image:
-    radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.9) 50%, transparent 52%),
-    radial-gradient(1.5px 1.5px at 80px 70px, rgba(255,255,255,0.8) 50%, transparent 52%),
-    radial-gradient(1.5px 1.5px at 60px 20px, rgba(255,255,255,0.85) 50%, transparent 52%),
-    radial-gradient(1px 1px at 40px 80px, rgba(255,255,255,0.7) 50%, transparent 52%),
-    radial-gradient(1px 1px at 140px 120px, rgba(255,255,255,0.75) 50%, transparent 52%),
-    radial-gradient(1.5px 1.5px at 100px 160px, rgba(255,255,255,0.8) 50%, transparent 52%),
-    radial-gradient(2px 2px at 50px 200px, rgba(255,255,255,0.85) 50%, transparent 52%);
-  background-size: 200px 200px, 240px 240px, 320px 320px, 280px 280px, 360px 360px, 300px 300px, 400px 400px;
-  animation: driftA 120s linear infinite;
-  opacity: 0.65;
-}
-
-#starfield2 {
-  background-image:
-    radial-gradient(1.2px 1.2px at 30px 60px, rgba(255,255,255,0.6) 50%, transparent 52%),
-    radial-gradient(1.2px 1.2px at 10px 10px, rgba(255,255,255,0.55) 50%, transparent 52%),
-    radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.5) 50%, transparent 52%),
-    radial-gradient(0.8px 0.8px at 70px 90px, rgba(255,255,255,0.45) 50%, transparent 52%),
-    radial-gradient(1px 1px at 130px 150px, rgba(255,255,255,0.5) 50%, transparent 52%);
-  background-size: 220px 220px, 300px 300px, 360px 360px, 280px 280px, 400px 400px;
-  animation: driftB 200s linear infinite;
-  opacity: 0.4;
-}
-
-@keyframes driftA {
-  from { background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px; }
-  to   { background-position: -900px 500px, 650px -700px, -950px -350px, 550px 800px, -700px 600px, 400px -900px, -500px 1000px; }
-}
-@keyframes driftB {
-  from { background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px, 0px 0px; }
-  to   { background-position: 1100px -600px, -800px 950px, 700px -1200px, -900px 650px, 600px -800px; }
-}
-</style>
-
-<div id="starfield"></div>
-<div id="starfield2"></div>
-""", unsafe_allow_html=True)
 
 st.markdown("""
 <div style="display: flex; justify-content: center; margin-top: 3rem; margin-bottom: 3rem;">
