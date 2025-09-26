@@ -1,17 +1,19 @@
 import streamlit as st
 from streamlit.components.v1 import html
 from PIL import Image
-from theme import inject_starry_bg, footer_message
+from theme import inject_starry_bg, footer_message, disable_sidebar_flash
 
 st.set_page_config(
     page_title="Urban Heat Risk Explorer",
     page_icon="🌡️",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed",
+    menu_items = None
 )
 
-
+disable_sidebar_flash(hide_toolbar = True)
 inject_starry_bg()
+
 html("""
 <div id="particles-js" style="position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: -1;"></div>
 
@@ -64,7 +66,7 @@ st.markdown("""
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 0 25px rgba(0, 150, 255, 0.3);
   ">
-    <h1 style="margin-top: 0; font-size: 2.5rem;">🌌 Urban Heat Risk Explorer</h1>
+    <h1 style="margin-top: 0; font-size: 2.5rem;">🌠 Urban Heat Risk Explorer</h1>
     <p style="font-size: 1.2rem; line-height: 1.5; max-width: 80%; margin: 0 auto; color: #bbb;">
       An interactive look at Toronto's neighbourhood-level vulnerability to urban heat
     </p>
@@ -88,12 +90,12 @@ with col1:
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 0 25px rgba(0, 150, 255, 0.3);
         ">
-        <h2 style="text-align: center; margin-top: 0;">🌍 <b>Why This Project Exists</b></h2>
+        <h2 style="text-align: center; margin-top: 0;">🌎 <b>Why This Project Exists</b></h2>
         <ul style="list-style-type: disc; text-align: left; line-height: 1.8; font-size: 1.1rem; max-width: 85%; margin: 0 auto;">
-            <li><b>Premise:</b> 🌡️ Urban heat is a growing challenge that affects all of us, especially those in <u>vulnerable communities</u>.
-            <li><b>Goal:</b> ✅ Make climate data <b>accessible</b> and <b>actionable</b> by combining <b>satellite imagery</b>, <b>climate indicators</b>, and <b>social vulnerability metrics</b> into one place.</li>
-            <li><b>Audience:</b> 🌱 Designed for <b>residents</b>, <b>researchers</b>, and <b>decision-makers</b> who wish to <b>drive meaningful change</b>.</li>
-            <li><b>Personal mission:</b> 🚀 Apply my skills in <b>data and analytics</b> to <i>make a difference</i> in the lives of real people.</li>
+            <li><b>Premise:</b> Urban heat is a growing challenge that affects all of us, especially those in vulnerable communities.
+            <li><b>Goal:</b> Make climate data <b>accessible</b> and <b>actionable</b> by combining <b>satellite imagery</b>, <b>climate indicators</b>, and <b>social vulnerability metrics</b> into one place.</li>
+            <li><b>Audience:</b> Designed for <b>residents</b>, <b>researchers</b>, and <b>decision-makers</b> who wish to <b>drive meaningful change</b>.</li>
+            <li><b>Personal mission:</b> Apply my skills in <b>data and analytics</b> to <i>make a difference</i> in the lives of real people.</li>
         </ul>
         </div>
     """, unsafe_allow_html=True)

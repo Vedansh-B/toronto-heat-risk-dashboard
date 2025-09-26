@@ -6,9 +6,11 @@ import folium
 from folium.features import GeoJson, GeoJsonTooltip, GeoJsonPopup
 from streamlit_folium import st_folium
 from branca.colormap import LinearColormap
-from theme import inject_starry_bg, footer_message
+from theme import inject_starry_bg, footer_message, disable_sidebar_flash
 
-st.set_page_config(page_title="Toronto Heat Risk Explorer", layout="wide")
+st.set_page_config(page_title="Toronto Heat Risk Explorer", layout="wide", page_icon = "🗺️", initial_sidebar_state = "collapsed", menu_items = None)
+
+disable_sidebar_flash(hide_toolbar = True)
 inject_starry_bg()
 
 gdf = gpd.read_file("data/processed/final_heat_risk_index.geojson")
@@ -120,17 +122,34 @@ def color_for(v):
     return cmap(v)
 
 def build_map(gdf, metric, name_col, color_for, zoom_to=None):
-    center = [43.7, -79.4] # Toronto bounds
-    zoom = 11
-    if zoom_to is not None: # zoom to selected neighbourhood
-        bounds = gdf[gdf[name_col] == zoom_to].total_bounds
-        center = [(bounds[1] + bounds[3]) / 2, (bounds[0] + bounds[2]) / 2]
-        zoom = 14 
- 
-    m = folium.Map(location=center, zoom_start=zoom, tiles="CartoDB Positron")
+    bounds = gdf.total_bounds  # [minx, miny, maxx, maxy]
+    toronto_bbox = [[bounds[1], bounds[0]], [bounds[3], bounds[2]]]  # [[south, west], [north, east]]
 
+    center = [(bounds[1] + bounds[3]) / 2, (bounds[0] + bounds[2]) / 2]
+    zoom = 11  # starting zoom
+    if zoom_to is not None:
+        selected_bounds = gdf[gdf[name_col] == zoom_to].total_bounds
+        center = [(selected_bounds[1] + selected_bounds[3]) / 2, (selected_bounds[0] + selected_bounds[2]) / 2]
+        zoom = 14
+
+    m = folium.Map(
+        location=center,
+        zoom_start=zoom,
+        tiles="CartoDB Positron",
+        min_zoom=11,        # don't let users zoom out further than city view
+        max_zoom=17,        # optional: cap extreme zoom-in
+        max_bounds=True,    # keep users inside Toronto's bounding box
+        scrollWheelZoom=True
+    )
+
+    # Fit bounds to entire city when no specific neighbourhood is selected
+    if zoom_to is None:
+        m.fit_bounds(toronto_bbox)
+
+    # Add metric column for tooltip display
     gdf["metric_display"] = gdf[metric].round(2)
 
+    # Add choropleth layer
     gj = GeoJson(
         data=gdf.__geo_interface__,
         style_function=lambda f: {
@@ -143,9 +162,10 @@ def build_map(gdf, metric, name_col, color_for, zoom_to=None):
         tooltip=GeoJsonTooltip(fields=[name_col, "metric_display"], aliases=["Neighbourhood:", metric]),
     ).add_to(m)
 
+    # If zoom_to is provided, re-fit to neighbourhood
     if zoom_to:
-        bounds = gdf[gdf[name_col] == zoom_to].total_bounds  # [minx, miny, maxx, maxy]
-        m.fit_bounds([[bounds[1], bounds[0]], [bounds[3], bounds[2]]], max_zoom=14)
+        selected_bounds = gdf[gdf[name_col] == zoom_to].total_bounds
+        m.fit_bounds([[selected_bounds[1], selected_bounds[0]], [selected_bounds[3], selected_bounds[2]]], max_zoom=14)
 
     return m
 
@@ -277,5 +297,45 @@ if metric in gdf.columns:
             )
 else:
     st.warning(f"No data available for {metric}")
+
+# --- Navigation Buttons ---
+st.markdown("""
+<div style="display: flex; justify-content: center; gap: 1.5rem; margin-top: 2rem;">
+
+  <!-- Home Button -->
+  <a href="/app" target="_self" style="
+      background: rgba(255,255,255,0.06);
+      color: white;
+      padding: 0.7rem 1.5rem;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: bold;
+      border: 1px solid rgba(255,255,255,0.2);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 0 20px rgba(255, 150, 0, 0.3);
+      transition: all 0.2s ease-in-out;">
+      🏠 Home
+  </a>
+
+  <!-- Methodology Button -->
+  <a href="/how_it_works" target="_self" style="
+      background: rgba(255,255,255,0.06);
+      color: white;
+      padding: 0.7rem 1.5rem;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: bold;
+      border: 1px solid rgba(255,255,255,0.2);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 0 20px rgba(255, 150, 0, 0.3);
+      transition: all 0.2s ease-in-out;">
+      🧠 See Methodology
+  </a>
+
+</div>
+""", unsafe_allow_html=True)
+
 
 footer_message()

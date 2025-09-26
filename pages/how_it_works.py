@@ -1,8 +1,10 @@
 import streamlit as st
-from theme import inject_starry_bg, footer_message
+from theme import inject_starry_bg, footer_message, disable_sidebar_flash
 import geopandas as gpd
 
-st.set_page_config(page_title="How It Works", layout="wide")
+st.set_page_config(page_title="How It Works", layout="wide", page_icon = "📚", initial_sidebar_state = "collapsed", menu_items = None)
+
+disable_sidebar_flash(hide_toolbar = True)
 inject_starry_bg()
 
 # ---------- Title ----------
@@ -37,21 +39,44 @@ st.markdown("""
 # --- Simple Flow Diagram ---
 st.markdown("""
 <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 1rem; margin: 1rem 0 2rem;">
-  <div style="background: rgba(255,255,255,0.08); padding: 1rem 1.2rem; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3);">🌡<br>LST</div>
+  
+  <div style="background: rgba(255,255,255,0.08); width: 90px; height: 90px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); text-align: center;">
+    🌡<br>LST
+  </div>
+  
   ➕
-  <div style="background: rgba(255,255,255,0.08); padding: 1rem 1.2rem; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3);">🌱<br>NDVI</div>
+  
+  <div style="background: rgba(255,255,255,0.08); width: 90px; height: 90px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); text-align: center;">
+    🌱<br>NDVI
+  </div>
+  
   ➕
-  <div style="background: rgba(255,255,255,0.08); padding: 1rem 1.2rem; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3);">👵<br>Elderly</div>
+  
+  <div style="background: rgba(255,255,255,0.08); width: 90px; height: 90px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); text-align: center;">
+    👵<br>Elderly
+  </div>
+  
   ➕
-  <div style="background: rgba(255,255,255,0.08); padding: 1rem 1.2rem; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3);">🏠<br>Living Alone</div>
+  
+  <div style="background: rgba(255,255,255,0.08); width: 90px; height: 90px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); text-align: center;">
+    🏠<br>Living Alone
+  </div>
+  
   ➕
-  <div style="background: rgba(255,255,255,0.08); padding: 1rem 1.2rem; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3);">💸<br>Low-Income</div>
+  
+  <div style="background: rgba(255,255,255,0.08); width: 90px; height: 90px; display: flex; flex-direction: column; justify-content: center; align-items: center; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); text-align: center;">
+    💸<br>Low-Income
+  </div>
+  
   ➡️
+  
   <div style="background: rgba(255,150,0,0.2); padding: 1rem 2rem; border-radius: 10px; border: 1px solid rgba(255,150,0,0.6);">
     <b>🔥 Heat Risk Index</b>
   </div>
+
 </div>
 """, unsafe_allow_html=True)
+
 
 # --- Centered Weights Table ---
 st.markdown("""
@@ -94,37 +119,30 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("""
-<style>
-/* Center the expander label */
-.streamlit-expanderHeader {
-    justify-content: center;
-    text-align: center;
-}
-</style>
-""", unsafe_allow_html=True)
+# --- Centered "Heat Risk Index Formula" block ---
+center = st.columns([1, 6, 1])[1]  # middle column centers the content
+with center:
+    st.markdown("""
+    <div style="text-align:center; margin: 1.25rem 0;">
+      <h4 style="margin:0;">📐 Heat Risk Index Formula</h4>
+      <p style="color:#ccc; font-size:0.95rem; margin:0.4rem 0 0;">
+        The HRI is a weighted combination of the above normalized factors:
+      </p>
+    </div>
+    """, unsafe_allow_html=True)
 
-with st.expander("📐 See the Exact HRI Formula"):
-    st.markdown(
-        """
-        <div style="text-align: center; margin: 1rem auto; max-width: 850px;">
-        """,
-        unsafe_allow_html=True,
-    )
+    # The formula (centered by the column)
     st.latex(r"""
     HRI = w_1 \cdot LST_{norm} + w_2 \cdot (1 - NDVI_{norm})
     + w_3 \cdot Elderly_{norm} + w_4 \cdot LivingAlone_{norm}
     + w_5 \cdot LowIncome_{norm}
     """)
-    st.markdown(
-        """
-        <p style="color:#ccc; font-size: 0.9rem; margin-top: 0.5rem; text-align: center;">
-        where each w_i represents the weight applied to that factor, and all inputs are normalized to [0,1].
-        </p>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+
+    # “Inline” explanation using LaTeX with \text{...} so it renders correctly
+    st.latex(r"""
+    \text{where } w_1, w_2, \dots, w_5 \text{ are the applied weights and all inputs are min-max normalized to } [0, 1].
+    """)
+
 
 # ---------- Data Sources ----------
 st.markdown("""
@@ -230,10 +248,48 @@ st.markdown("""
 st.markdown("""
 <div style="text-align: center; margin: 1rem auto; max-width: 700px;">
   <p style="color: #aaa; font-size: 0.9rem;">
-    Landing page background image courtesy of 
-    <a href="https://unsplash.com/photos/example-link" target="_blank" style="color:#1E90FF;">
-    Photographer Name / Unsplash</a>.
+    Landing page image courtesy of 
+    <a href="https://unsplash.com/@aerialshooter" target="_blank" style="color:#1E90FF;">
+    Charan S / Unsplash</a>.
   </p>
+</div>
+""", unsafe_allow_html=True)
+
+st.markdown("""
+<div style="display: flex; justify-content: center; gap: 1.5rem; margin-top: 2rem;">
+
+  <!-- Home Button -->
+  <a href="/app" target="_self" style="
+      background: rgba(255,255,255,0.06);
+      color: white;
+      padding: 0.7rem 1.5rem;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: bold;
+      border: 1px solid rgba(255,255,255,0.2);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 0 20px rgba(255, 150, 0, 0.3);
+      transition: all 0.2s ease-in-out;">
+      🏠 Home
+  </a>
+
+  <!-- Launch Explorer Button -->
+  <a href="/explore_map" target="_self" style="
+      background: rgba(255,255,255,0.06);
+      color: white;
+      padding: 0.7rem 1.5rem;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: bold;
+      border: 1px solid rgba(255,255,255,0.2);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 0 20px rgba(255, 150, 0, 0.3);
+      transition: all 0.2s ease-in-out;">
+      🗺️ Launch Heat Risk Explorer
+  </a>
+
 </div>
 """, unsafe_allow_html=True)
 
