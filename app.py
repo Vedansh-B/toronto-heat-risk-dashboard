@@ -145,6 +145,6 @@ st.markdown("""
   transform: translateY(-2px);
 }
 </style>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html = True)
 
 footer_message()

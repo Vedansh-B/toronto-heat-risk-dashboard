@@ -8,7 +8,7 @@ from streamlit_folium import st_folium
 from branca.colormap import LinearColormap
 from theme import inject_starry_bg, footer_message, disable_sidebar_flash
 
-st.set_page_config(page_title="Toronto Heat Risk Explorer", layout="wide", page_icon = "🗺️", initial_sidebar_state = "collapsed", menu_items = None)
+st.set_page_config(page_title = "Toronto Heat Risk Explorer", layout = "wide", page_icon = "🗺️", initial_sidebar_state = "collapsed", menu_items = None)
 
 disable_sidebar_flash(hide_toolbar = True)
 inject_starry_bg()
@@ -29,7 +29,7 @@ rename_map = {
     "LowIncome": "Low-Income Households (%)",
     "LivingAlone": "Living Alone (%)",
 }
-gdf = gdf.rename(columns={k: v for k, v in rename_map.items() if k in gdf.columns})
+gdf = gdf.rename(columns = {k: v for k, v in rename_map.items() if k in gdf.columns})
 
 name_col = "Neighbourhood" if "Neighbourhood" in gdf.columns else "neighborhood"
 gdf[name_col] = gdf[name_col].str.strip()
@@ -38,7 +38,15 @@ gdf[name_col] = gdf[name_col].str.strip()
 for c in rename_map.values():
     if c in gdf.columns:
         gdf[c] = pd.to_numeric(gdf[c], errors="coerce")
+        
+# --- Hardcode "No Data" for Church-Wellesley ---
+mask = gdf[name_col].str.contains("Church-Wellesley", case=False, na=False)
+gdf.loc[mask, "Heat Risk Index"] = np.nan
+gdf.loc[mask, ["Land Surface Temperature", "Normalized Difference Vegetation Index"]] = np.nan
 
+gdf.loc[mask, "metric_display"] = "No data"
+
+# --- Page Title ---
 st.markdown("""
 <div style="
     max-width: 950px; margin: 1rem auto; text-align: center;
@@ -71,6 +79,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+# --- Filtering Options ---
 with st.container():
     st.markdown(
         """
@@ -92,14 +101,12 @@ with st.container():
     metric = st.radio(
         "Choose a metric to color the map by",
         ["Heat Risk Index", "Land Surface Temperature", "Normalized Difference Vegetation Index"],
-        horizontal=True,
-        label_visibility="collapsed",
-        key="metric_selector"
+        horizontal = True,
+        label_visibility = "collapsed",
+        key = "metric_selector"
     )
 
     st.markdown("</div>", unsafe_allow_html=True)
-
-
 
 # Heat risk colour palette (green = low; red = high)
 vals = gdf[metric].dropna().to_numpy()
@@ -121,36 +128,35 @@ def color_for(v):
         return "#cccccc"
     return cmap(v)
 
+# --- Core map rendering logic ---
 def build_map(gdf, metric, name_col, color_for, zoom_to=None):
-    bounds = gdf.total_bounds  # [minx, miny, maxx, maxy]
+    bounds = gdf.total_bounds
     toronto_bbox = [[bounds[1], bounds[0]], [bounds[3], bounds[2]]]  # [[south, west], [north, east]]
 
     center = [(bounds[1] + bounds[3]) / 2, (bounds[0] + bounds[2]) / 2]
-    zoom = 11  # starting zoom
-    if zoom_to is not None:
+    zoom = 11
+    if zoom_to:
         selected_bounds = gdf[gdf[name_col] == zoom_to].total_bounds
-        center = [(selected_bounds[1] + selected_bounds[3]) / 2, (selected_bounds[0] + selected_bounds[2]) / 2]
+        center = [(selected_bounds[1] + selected_bounds[3]) / 2,
+                  (selected_bounds[0] + selected_bounds[2]) / 2]
         zoom = 14
 
     m = folium.Map(
-        location=center,
-        zoom_start=zoom,
-        tiles="CartoDB Positron",
-        min_zoom=11,        # don't let users zoom out further than city view
-        max_zoom=17,        # optional: cap extreme zoom-in
-        max_bounds=True,    # keep users inside Toronto's bounding box
-        scrollWheelZoom=True
+        location = center,
+        zoom_start = zoom,
+        tiles = "CartoDB Positron",
+        min_zoom = 11,
+        max_zoom = 17,
+        scrollWheelZoom = True
     )
 
-    # Fit bounds to entire city when no specific neighbourhood is selected
-    if zoom_to is None:
-        m.fit_bounds(toronto_bbox)
+    m.fit_bounds(toronto_bbox)
+    m.options['maxBounds'] = toronto_bbox
+    m.options['maxBoundsViscosity'] = 1.0  
 
-    # Add metric column for tooltip display
-    gdf["metric_display"] = gdf[metric].round(2)
+    gdf["metric_display"] = gdf[metric].apply(lambda x: round(x, 2) if pd.notna(x) else "No data")
 
-    # Add choropleth layer
-    gj = GeoJson(
+    GeoJson(
         data=gdf.__geo_interface__,
         style_function=lambda f: {
             "fillColor": color_for(f["properties"].get(metric)),
@@ -158,16 +164,12 @@ def build_map(gdf, metric, name_col, color_for, zoom_to=None):
             "weight": 0.6,
             "fillOpacity": 0.9,
         },
-        highlight_function=lambda f: {"weight": 2, "color": "#000", "fillOpacity": 0.95},
-        tooltip=GeoJsonTooltip(fields=[name_col, "metric_display"], aliases=["Neighbourhood:", metric]),
+        highlight_function = lambda f: {"weight": 2, "color": "#000", "fillOpacity": 0.95},
+        tooltip = GeoJsonTooltip(fields=[name_col, "metric_display"], aliases=["Neighbourhood:", metric]),
     ).add_to(m)
 
-    # If zoom_to is provided, re-fit to neighbourhood
-    if zoom_to:
-        selected_bounds = gdf[gdf[name_col] == zoom_to].total_bounds
-        m.fit_bounds([[selected_bounds[1], selected_bounds[0]], [selected_bounds[3], selected_bounds[2]]], max_zoom=14)
-
     return m
+
 
 vals = gdf[metric].dropna().to_numpy()
 vmin, vmax = float(np.nanmin(vals)), float(np.nanmax(vals))
@@ -183,22 +185,27 @@ def color_for(v):
 neighbourhoods = sorted(gdf[name_col].dropna().unique())
 selected_neigh = st.session_state.get("selected_neigh", "-- Select --")
 
-zoom_target = selected_neigh if selected_neigh != "-- Select --" else None
-m = build_map(gdf, metric, name_col, color_for, zoom_to=zoom_target)
+with st.container():
+    with st.spinner("🔄 Rendering map..."):
+        zoom_target = selected_neigh if selected_neigh != "-- Select --" else None
+        m = build_map(gdf, metric, name_col, color_for, zoom_to = zoom_target)
+        st_folium(m, height = 720, use_container_width = True, key = "mainmap")
 
-st_folium(m, height=720, use_container_width=True, key="mainmap")
+st.markdown("</div>", unsafe_allow_html = True)
+
+st_folium(m, height = 720, use_container_width = True, key = "mainmap")
 
 new_selection = st.selectbox(
     "Neighbourhood",
     ["-- Select --"] + list(neighbourhoods),
     index=(["-- Select --"] + list(neighbourhoods)).index(selected_neigh)
     if selected_neigh in neighbourhoods else 0,
-    label_visibility="collapsed"
+    label_visibility = "collapsed"
 )
 
 if new_selection != selected_neigh:
     st.session_state.selected_neigh = new_selection
-    st.rerun()  # map rerender with zoom
+    st.rerun() 
 
 if selected_neigh and selected_neigh != "-- Select --":
     props = gdf[gdf[name_col] == selected_neigh].iloc[0].to_dict()
@@ -207,7 +214,7 @@ if selected_neigh and selected_neigh != "-- Select --":
     st.markdown(f"### 📍 {props.get(name_col)}")
 
     cols = st.columns(3)
-    fmt = lambda x: "—" if x is None or (isinstance(x, float) and np.isnan(x)) else f"{x:.2f}"
+    fmt = lambda x: "No data" if x is None or (isinstance(x, float) and np.isnan(x)) else f"{x:.2f}"
 
     with cols[0]:
         st.metric("Normalized Heat Risk Index", fmt(props.get("Heat Risk Index")))
@@ -224,6 +231,7 @@ else:
     st.caption("Select a neighbourhood to view its metrics.")
 
 
+# --- Neighbourhood Rankings ---
 st.markdown("---")
 st.markdown("### 📊 Neighbourhood Rankings")
 
@@ -232,9 +240,9 @@ if metric in gdf.columns:
 
     if metric == "Normalized Difference Vegetation Index":
         # Sort ascending for bottom 5 (least vegetated first)
-        df_sorted = df_sorted.sort_values(by=metric, ascending=True)
+        df_sorted = df_sorted.sort_values(by = metric, ascending = True)
     else:
-        df_sorted = df_sorted.sort_values(by=metric, ascending=False)
+        df_sorted = df_sorted.sort_values(by = metric, ascending = False)
 
     col_high, col_low = st.columns(2)
 
@@ -243,34 +251,34 @@ if metric in gdf.columns:
 
     if metric == "Normalized Difference Vegetation Index":
         # For NDVI, high = good
-        df_sorted = df_sorted.sort_values(by=metric, ascending=True)
+        df_sorted = df_sorted.sort_values(by = metric, ascending = True)
 
         col_high, col_low = st.columns(2)
 
         with col_high:
             st.markdown(f"**Top 5 – Best Vegetation (High NDVI)** 🌳")
-            top5 = df_sorted.tail(5).sort_values(by=metric, ascending=False).reset_index(drop=True)
+            top5 = df_sorted.tail(5).sort_values(by = metric, ascending = False).reset_index(drop = True)
             st.dataframe(
                 top5.style.format({metric: "{:.2f}"}).background_gradient(
-                    subset=[metric], cmap="Greens"
+                    subset = [metric], cmap = "Greens"
                 ),
-                use_container_width=True,
-                hide_index=True,
+                use_container_width = True,
+                hide_index = True,
             )
 
         with col_low:
             st.markdown(f"**Bottom 5 – Sparse Vegetation (Low NDVI)** 🌵")
-            bottom5 = df_sorted.head(5).reset_index(drop=True)
+            bottom5 = df_sorted.head(5).reset_index(drop = True)
             st.dataframe(
                 bottom5.style.format({metric: "{:.2f}"}).background_gradient(
-                    subset=[metric], cmap="Reds_r"  # reversed so lowest = darkest red
+                    subset = [metric], cmap = "Reds_r"  # reversed so lowest = darkest red
                 ),
-                use_container_width=True,
-                hide_index=True,
+                use_container_width = True,
+                hide_index = True,
             )
 
     else:
-        df_sorted = df_sorted.sort_values(by=metric, ascending=False)
+        df_sorted = df_sorted.sort_values(by = metric, ascending = False)
 
         col_high, col_low = st.columns(2)
 
@@ -279,21 +287,21 @@ if metric in gdf.columns:
             top5 = df_sorted.head(5).reset_index(drop=True)
             st.dataframe(
                 top5.style.format({metric: "{:.2f}"}).background_gradient(
-                    subset=[metric], cmap="Reds"
+                    subset = [metric], cmap = "Reds"
                 ),
-                use_container_width=True,
-                hide_index=True,
+                use_container_width = True,
+                hide_index = True,
             )
 
         with col_low:
             st.markdown(f"**Top 5 – Lowest {metric}** 🌱")
-            bottom5 = df_sorted.tail(5).sort_values(by=metric, ascending=True).reset_index(drop=True)
+            bottom5 = df_sorted.tail(5).sort_values(by = metric, ascending = True).reset_index(drop=True)
             st.dataframe(
                 bottom5.style.format({metric: "{:.2f}"}).background_gradient(
                     subset = [metric], cmap = "Greens_r"  # reversed so lowest = darkest green
                 ),
-                use_container_width=True,
-                hide_index=True,
+                use_container_width = True,
+                hide_index = True,
             )
 else:
     st.warning(f"No data available for {metric}")
@@ -336,6 +344,5 @@ st.markdown("""
 
 </div>
 """, unsafe_allow_html=True)
-
 
 footer_message()

@@ -2,12 +2,12 @@ import streamlit as st
 from theme import inject_starry_bg, footer_message, disable_sidebar_flash
 import geopandas as gpd
 
-st.set_page_config(page_title="How It Works", layout="wide", page_icon = "📚", initial_sidebar_state = "collapsed", menu_items = None)
+st.set_page_config(page_title = "How It Works", layout = "wide", page_icon = "📚", initial_sidebar_state = "collapsed", menu_items = None)
 
 disable_sidebar_flash(hide_toolbar = True)
 inject_starry_bg()
 
-# ---------- Title ----------
+# ---------- Page title ----------
 st.markdown("""
 <div style="
     max-width: 950px; margin: 2rem auto; text-align: center;
@@ -22,7 +22,7 @@ st.markdown("""
     Peek behind the curtain of the <b>Toronto Heat Risk Explorer</b> and see how we calculate neighbourhood vulnerability.
   </p>
 </div>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html = True)
 
 # ---------- Methodology ----------
 st.markdown("""
@@ -34,7 +34,7 @@ st.markdown("""
     using a weighted sum. Higher HRI values indicate <b>greater vulnerability</b>.
   </p>
 </div>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html = True)
 
 # --- Simple Flow Diagram ---
 st.markdown("""
@@ -75,7 +75,7 @@ st.markdown("""
   </div>
 
 </div>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html = True)
 
 
 # --- Centered Weights Table ---
@@ -117,10 +117,9 @@ st.markdown("""
     Satellite data covers <b>June 1 – August 31, 2024</b>, reflecting Toronto’s summer conditions.
   </p>
 </div>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html = True)
 
-# --- Centered "Heat Risk Index Formula" block ---
-center = st.columns([1, 6, 1])[1]  # middle column centers the content
+center = st.columns([1, 6, 1])[1] 
 with center:
     st.markdown("""
     <div style="text-align:center; margin: 1.25rem 0;">
@@ -129,16 +128,14 @@ with center:
         The HRI is a weighted combination of the above normalized factors:
       </p>
     </div>
-    """, unsafe_allow_html=True)
+    """, unsafe_allow_html = True)
 
-    # The formula (centered by the column)
     st.latex(r"""
     HRI = w_1 \cdot LST_{norm} + w_2 \cdot (1 - NDVI_{norm})
     + w_3 \cdot Elderly_{norm} + w_4 \cdot LivingAlone_{norm}
     + w_5 \cdot LowIncome_{norm}
     """)
 
-    # “Inline” explanation using LaTeX with \text{...} so it renders correctly
     st.latex(r"""
     \text{where } w_1, w_2, \dots, w_5 \text{ are the applied weights and all inputs are min-max normalized to } [0, 1].
     """)
@@ -151,7 +148,7 @@ st.markdown("""
   <p>All datasets were reprojected, cleaned, and spatially joined at the neighbourhood level 
   before generating the final index. All processing was done with Python.</p>
 </div>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html = True)
 
 st.markdown("""
 <div style="text-align: center; margin: 0 auto; max-width: 700px;">
@@ -175,7 +172,7 @@ st.markdown("""
   </li>
 </ul>
 </div>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html = True)
 
 # ---------- Download Section ----------
 st.markdown("""
@@ -185,11 +182,11 @@ st.markdown("""
     Download the complete neighbourhood-level <b>Heat Risk Index</b> dataset for Toronto.
   </p>
 </div>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html = True)
 
 try:
     gdf = gpd.read_file("data/processed/final_heat_risk_index.geojson")
-    df_preview = gdf.drop(columns="geometry").copy()
+    df_preview = gdf.drop(columns = "geometry").copy()
 
     st.markdown(
         """
@@ -197,18 +194,18 @@ try:
           <p style="font-size: 0.9rem; color:#ccc;">Preview of first 5 rows:</p>
         </div>
         """,
-        unsafe_allow_html=True
+        unsafe_allow_html = True
     )
 
-    st.markdown("<div style='display: flex; justify-content: center;'>", unsafe_allow_html=True)
+    st.markdown("<div style='display: flex; justify-content: center;'>", unsafe_allow_html = True)
     st.dataframe(
-        df_preview.head(5).style.format(precision=2),
-        use_container_width=True
+        df_preview.head(5).style.format(precision = 2),
+        use_container_width = True
     )
-    st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html = True)
 
-    # # Download button
-    csv_bytes = df_preview.to_csv(index=False).encode("utf-8")
+    # Download button
+    csv_bytes = df_preview.to_csv(index = False).encode("utf-8")
     col1, col2, col3 = st.columns([1, 0.6, 1])
     with col2:
         st.markdown(
@@ -231,7 +228,7 @@ try:
                 </a>
             </div>
             """,
-            unsafe_allow_html=True
+            unsafe_allow_html = True
         )
 
 except FileNotFoundError:
@@ -244,7 +241,7 @@ st.markdown("""
 <div style="text-align: center; margin: 2rem auto; max-width: 850px;">
   <h3>🤝 Acknowledgements</h3>
 </div>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html = True)
 st.markdown("""
 <div style="text-align: center; margin: 1rem auto; max-width: 700px;">
   <p style="color: #aaa; font-size: 0.9rem;">
@@ -253,7 +250,7 @@ st.markdown("""
     Charan S / Unsplash</a>.
   </p>
 </div>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html = True)
 
 st.markdown("""
 <div style="display: flex; justify-content: center; gap: 1.5rem; margin-top: 2rem;">
@@ -291,6 +288,6 @@ st.markdown("""
   </a>
 
 </div>
-""", unsafe_allow_html=True)
+""", unsafe_allow_html = True)
 
 footer_message()
