@@ -1,6 +1,7 @@
 import streamlit as st
 from theme import inject_starry_bg, footer_message, disable_sidebar_flash
 import geopandas as gpd
+import base64
 
 st.set_page_config(page_title = "How It Works", layout = "wide", page_icon = "📚", initial_sidebar_state = "collapsed", menu_items = None)
 
@@ -205,13 +206,15 @@ try:
     st.markdown("</div>", unsafe_allow_html = True)
 
     # Download button
-    csv_bytes = df_preview.to_csv(index = False).encode("utf-8")
+    csv_bytes = df_preview.to_csv(index=False).encode("utf-8")
+    b64 = base64.b64encode(csv_bytes).decode()
+    
     col1, col2, col3 = st.columns([1, 0.6, 1])
     with col2:
         st.markdown(
             f"""
             <div style="display: flex; justify-content: center;">
-                <a href="data:file/csv;base64,{csv_bytes.decode('latin1')}" download="toronto_heat_risk_index.csv"
+                <a href="data:text/csv;base64,{b64}" download="toronto_heat_risk_index.csv"
                 style="
                     display:inline-block;
                     padding: 0.7rem 1.5rem;
