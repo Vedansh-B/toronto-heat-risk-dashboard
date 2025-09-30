@@ -1,9 +1,13 @@
 streamlit == 1.39.0
 pandas == 2.2.3
 numpy == 1.26.4
+
+# Geo stack
 geopandas == 1.0.1
-shapely == 2.1.1
+shapely == 2.0.6
 rasterio == 1.3.10
+
+# Mapping
 folium == 0.19.4
 streamlit-folium == 0.20.0
 matplotlib == 3.9.2

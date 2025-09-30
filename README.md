@@ -29,7 +29,6 @@ This tool combines **satellite data** (land surface temperature, vegetation cove
 - **NASA AppEEARS** – MODIS LST & NDVI satellite data
 - **City of Toronto Open Data** – Neighborhood boundaries, demographics
 - **Statistics Canada Census 2021** – Socio-economic indicators
-- [PLACEHOLDER: add any additional datasets you’ve used (e.g., income stats, living alone, etc.)]
 
 ---
 
