@@ -4,8 +4,8 @@ from PIL import Image
 from theme import inject_starry_bg, footer_message, disable_sidebar_flash
 
 st.set_page_config(
-    page_title="Urban Heat Risk Explorer",
-    page_icon="🌡️",
+    page_title="Toronto Heat Risk Dashboard",
+    page_icon="🌠",
     layout="wide",
     initial_sidebar_state="collapsed",
     menu_items = None
@@ -66,7 +66,7 @@ st.markdown("""
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 0 25px rgba(0, 150, 255, 0.3);
   ">
-    <h1 style="margin-top: 0; font-size: 2.5rem;">🌠 Urban Heat Risk Explorer</h1>
+    <h1 style="margin-top: 0; font-size: 2.5rem;">🌠 Toronto Heat Risk Dashboard</h1>
     <p style="font-size: 1.2rem; line-height: 1.5; max-width: 80%; margin: 0 auto; color: #bbb;">
       An interactive look at Toronto's neighbourhood-level vulnerability to urban heat
     </p>

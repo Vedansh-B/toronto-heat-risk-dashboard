@@ -8,7 +8,7 @@ from streamlit_folium import st_folium
 from branca.colormap import LinearColormap
 from theme import inject_starry_bg, footer_message, disable_sidebar_flash
 
-st.set_page_config(page_title = "Toronto Heat Risk Explorer", layout = "wide", page_icon = "🗺️", initial_sidebar_state = "collapsed", menu_items = None)
+st.set_page_config(page_title = "Heat Risk Explorer", layout = "wide", page_icon = "🗺️", initial_sidebar_state = "collapsed", menu_items = None)
 
 disable_sidebar_flash(hide_toolbar = True)
 inject_starry_bg()
@@ -56,7 +56,7 @@ st.markdown("""
     border: 1px solid rgba(255,255,255,0.2);
     box-shadow: 0 0 25px rgba(255, 150, 0, 0.3);
 ">
-  <h1 style="margin: 0;">🔥 Toronto Heat Risk Explorer</h1>
+  <h1 style="margin: 0;">🔥 Heat Risk Explorer</h1>
   <p style="margin: 0.5rem 0 0; color: #ccc;">
     Explore neighbourhood-level <b>heat vulnerability</b> across Toronto using multiple metrics.
   </p>
@@ -98,6 +98,21 @@ with st.container():
         unsafe_allow_html=True
     )
 
+    st.markdown(
+    """
+    <style>
+    div[data-testid="stRadio"] {
+        display: flex;
+        justify-content: center;
+        margin-top: 0.5rem;
+    }
+    /* Slightly smaller label text for a balanced look */
+    div[data-testid="stRadio"] label p {
+        font-size: 0.95rem;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
     metric = st.radio(
         "Choose a metric to color the map by",
         ["Heat Risk Index", "Land Surface Temperature", "Normalized Difference Vegetation Index"],
@@ -130,29 +145,42 @@ def color_for(v):
 
 # --- Core map rendering logic ---
 def build_map(gdf, metric, name_col, color_for, zoom_to=None):
-    bounds = gdf.total_bounds
-    toronto_bbox = [[bounds[1], bounds[0]], [bounds[3], bounds[2]]]  # [[south, west], [north, east]]
+    # City bounds
+    bounds = gdf.total_bounds  # [minx, miny, maxx, maxy]
+    toronto_bbox = [[bounds[1], bounds[0]], [bounds[3], bounds[2]]]  # [[S, W], [N, E]]
 
+    # Default center/zoom (city view)
     center = [(bounds[1] + bounds[3]) / 2, (bounds[0] + bounds[2]) / 2]
     zoom = 11
+    selected_bbox = None
+
     if zoom_to:
-        selected_bounds = gdf[gdf[name_col] == zoom_to].total_bounds
-        center = [(selected_bounds[1] + selected_bounds[3]) / 2,
-                  (selected_bounds[0] + selected_bounds[2]) / 2]
-        zoom = 14
+        nb = gdf[gdf[name_col] == zoom_to]
+        if not nb.empty:
+            b = nb.total_bounds  # [minx, miny, maxx, maxy]
+            selected_bbox = [[b[1], b[0]], [b[3], b[2]]]  # [[S, W], [N, E]]
+            center = [(b[1] + b[3]) / 2, (b[0] + b[2]) / 2]
+            zoom = 14
 
     m = folium.Map(
-        location = center,
-        zoom_start = zoom,
-        tiles = "CartoDB Positron",
-        min_zoom = 11,
-        max_zoom = 17,
-        scrollWheelZoom = True
+        location=center,
+        zoom_start=zoom,
+        tiles="CartoDB Positron",
+        min_zoom=11,
+        max_zoom=17,
+        scrollWheelZoom=True,
+        max_bounds=True, 
     )
 
-    m.fit_bounds(toronto_bbox)
-    m.options['maxBounds'] = toronto_bbox
-    m.options['maxBoundsViscosity'] = 1.0  
+    # Constrain panning, with elastic snap-back
+    m.options["maxBounds"] = toronto_bbox
+    m.options["maxBoundsViscosity"] = 1.0
+
+    # Fit to neighbourhood if selected, else to city
+    if selected_bbox is not None:
+        m.fit_bounds(selected_bbox, max_zoom=14)
+    else:
+        m.fit_bounds(toronto_bbox)
 
     gdf["metric_display"] = gdf[metric].apply(lambda x: round(x, 2) if pd.notna(x) else "No data")
 
@@ -164,8 +192,8 @@ def build_map(gdf, metric, name_col, color_for, zoom_to=None):
             "weight": 0.6,
             "fillOpacity": 0.9,
         },
-        highlight_function = lambda f: {"weight": 2, "color": "#000", "fillOpacity": 0.95},
-        tooltip = GeoJsonTooltip(fields=[name_col, "metric_display"], aliases=["Neighbourhood:", metric]),
+        highlight_function=lambda f: {"weight": 2, "color": "#000", "fillOpacity": 0.95},
+        tooltip=GeoJsonTooltip(fields=[name_col, "metric_display"], aliases=["Neighbourhood:", metric]),
     ).add_to(m)
 
     return m
@@ -185,15 +213,43 @@ def color_for(v):
 neighbourhoods = sorted(gdf[name_col].dropna().unique())
 selected_neigh = st.session_state.get("selected_neigh", "-- Select --")
 
+# --- One-time Load Note (no button needed) ---
+if "seen_load_note" not in st.session_state:
+    st.session_state.seen_load_note = False
+
+if not st.session_state.seen_load_note:
+    st.markdown(
+        """
+        <div style="
+            max-width: 700px;
+            margin: 1rem auto;
+            text-align: center;
+            background: rgba(255,255,255,0.06);
+            color: #fff;
+            padding: 1.2rem;
+            border-radius: 14px;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 0 20px rgba(255, 150, 0, 0.3);
+        ">
+            <p style="margin: 0; font-size: 1.05rem;">
+                ⏳ The Heat Risk Explorer may take <b>5–7 seconds</b> to load on your first visit.<br>
+                Thanks for your patience!
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    # Mark it as "seen" so it never shows again
+    st.session_state.seen_load_note = True
+
+
 with st.container():
     with st.spinner("🔄 Rendering map..."):
         zoom_target = selected_neigh if selected_neigh != "-- Select --" else None
         m = build_map(gdf, metric, name_col, color_for, zoom_to = zoom_target)
         st_folium(m, height = 720, use_container_width = True, key = "mainmap")
-
-st.markdown("</div>", unsafe_allow_html = True)
-
-st_folium(m, height = 720, use_container_width = True, key = "mainmap")
 
 new_selection = st.selectbox(
     "Neighbourhood",
