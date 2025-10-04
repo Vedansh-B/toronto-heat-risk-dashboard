@@ -2,8 +2,8 @@ name: Keep Streamlit App Alive
 
 on:
   schedule:
-    - cron: "*/10 * * * *"   # Scheduled to run every 10 minutes
-  workflow_dispatch:
+    - cron: "*/10 * * * *"  
+  workflow_dispatch:         
 
 jobs:
   ping:
@@ -11,4 +11,5 @@ jobs:
     steps:
       - name: Curl the app
         run: |
-          curl -L --silent --show-error https://toronto-heat-risk-dashboard.streamlit.app > /dev/null
+          echo "Pinging app..."
+          curl -L --max-redirs 20 --silent --show-error --fail https://toronto-heat-risk-dashboard.streamlit.app || exit 0
