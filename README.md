@@ -7,7 +7,7 @@ This tool combines **satellite data** (land surface temperature, vegetation cove
 
 ## 🚀 Live Demo
 
-👉 Try it here: PLACEHOLDER
+👉 Try it here: [Toronto Heat Risk Dashboard](https://toronto-heat-risk-dashboard.streamlit.app/)
 
 ![App Screenshot](data/processed/app-screenshot.jpg)
 
